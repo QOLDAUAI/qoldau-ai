@@ -26,7 +26,12 @@ class Handler(SimpleHTTPRequestHandler):
    if not output: raise ValueError('AI жауап бермеді. Қайта көріңіз.')
    self.respond(200,{'reply':output})
   except urllib.error.HTTPError as e:
-   self.respond(502,{'error':f'AI қызметі қате қайтарды ({e.code}). Модельді немесе тегін лимитті тексеріңіз.'})
+   except urllib.error.HTTPError as e:
+   detail = e.read().decode('utf-8', errors='replace')
+   print(f'Gemini API HTTP {e.code}: {detail[:2000]}', flush=True)
+   self.respond(502, {
+       'error': f'Gemini API қатесі ({e.code}). Толық мәлімет Render Logs бөлімінде.'
+   })
   except Exception as e: self.respond(400,{'error':str(e)})
  def respond(self,status,obj):
   raw=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status);self.send_header('Content-Type','application/json; charset=utf-8');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)

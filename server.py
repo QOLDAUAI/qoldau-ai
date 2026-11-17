@@ -25,8 +25,15 @@ class Handler(SimpleHTTPRequestHandler):
    output='\n'.join(p.get('text','') for c in result.get('candidates',[]) for p in c.get('content',{}).get('parts',[]))
    if not output: raise ValueError('AI жауап бермеді. Қайта көріңіз.')
    self.respond(200,{'reply':output})
-  except urllib.error.HTTPError as e:
    except urllib.error.HTTPError as e:
+   detail = e.read().decode('utf-8', errors='replace')
+   print(f'Gemini API HTTP {e.code}: {detail[:2000]}', flush=True)
+   self.respond(502, {
+       'error': f'Gemini API қатесі ({e.code}). Толық мәлімет Render Logs бөлімінде.'
+   })
+  except Exception as e:
+   self.respond(400, {'error': str(e)})
+
    detail = e.read().decode('utf-8', errors='replace')
    print(f'Gemini API HTTP {e.code}: {detail[:2000]}', flush=True)
    self.respond(502, {
